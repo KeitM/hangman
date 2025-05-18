@@ -18,3 +18,12 @@ level = int(input())
 
 # if level == 1:
     
+# if level == 2:
+# if level == 3:
+# else:
+#    print("Введите крректные данные")
+
+def first_level():
+    with open('example.txt', 'r') as file:
+    content = file.read()
+    print(content)
