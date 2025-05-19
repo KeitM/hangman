@@ -17,7 +17,7 @@ print(f" Для этого введи одну из 3х цифр: 1, 2, 3. 1 - �
 level = int(input())
 
 # if level == 1:
-    
+   # first_level():
 # if level == 2:
 # if level == 3:
 # else:
@@ -25,5 +25,5 @@ level = int(input())
 
 def first_level():
     with open('example.txt', 'r') as file:
-    content = file.read()
+    content = file.readline()
     print(content)
