@@ -1,8 +1,9 @@
 import os
 import random
 import linecache
+from termcolor import colored
 
-os.system('cls' if os.name == 'nt' else 'clear')
+
 
 if os.name == 'nt':
 
@@ -55,62 +56,93 @@ def trird_level():
    
    return word_for_guessing
 
-# Загружаем стадии из файла один раз
+
 def load_hangman_stages(filename="hangman_stages.txt"):
     with open(filename, "r", encoding="utf-8") as file:
         content = file.read()
     
-    stages = content.strip().split("\n\n")  # Разделяем по пустым строкам
+    stages = content.strip().split("\n\n")  
     return stages
 
 hangman_stages = load_hangman_stages()
-     
-def human_answers(word_for_guessing,lengt_of_word_for_guessing):
+
+
+def update_hangman_file(line_number, new_content, filename="hangman_stages.txt"):
+    with open(filename, "r", encoding="utf-8") as file:
+        lines = file.readlines()
+
+
+    if line_number < len(lines):
+        lines[line_number] = new_content
+    else:
+        # Если нет — добавляем пустые строки до нужной
+        while len(lines) <= line_number:
+            lines.append("\n")
+        lines[line_number] = new_content
+
+    # Перезаписываем файл
+    with open(filename, "w", encoding="utf-8") as file:
+        file.writelines(lines)
+
+
+def human_answers(word_for_guessing, length_of_word_for_guessing):
     word_letters = list(word_for_guessing)
     guessed_letters = ["_"] * len(word_letters)
-    max_attempts = lengt_of_word_for_guessing + 5
+    max_attempts = length_of_word_for_guessing + 5
     attempt_count = 0
 
-   
+    print(f"\nСлово: {' '.join(guessed_letters)}")
 
     while True:
-     print("\nСлово:", " ".join(guessed_letters))
+        print(f"\nСлово: {' '.join(guessed_letters)}")
 
-    # Отображаем текущую стадию
-     if attempt_count < len(hangman_stages):
+        # --- Обновление виселицы ---
         if attempt_count == 1:
-            line_number = 5  # Например, третья строка
-            new_content = "O\n"  # Новое содержимое строки
-
-            # Читаем все строки
-            with open("hangman_stages.txt", "r", encoding="utf-8") as file:
-                lines = file.readlines()
-
-            # Перезаписываем файл с изменениями
-            with open("hangman_stages.txt", "w", encoding="utf-8") as file:
-                file.writelines(lines)
+            update_hangman_file(4, " O\n")
 
         elif attempt_count == 2:
-            line_number = 3
-            new_content = "|\n"
+            update_hangman_file(5, " |\n")
 
+        elif attempt_count == 3:
+            update_hangman_file(6, "/|\ \n")
+
+        elif attempt_count == 4:
+            update_hangman_file(7, " | \n")
+
+        elif attempt_count == 5:
+            update_hangman_file(8, "/ \ \n")
+
+        elif attempt_count == 6:
+            update_hangman_file(9, "  \n")
+
+        elif attempt_count == 7:
+            update_hangman_file(10, "   \n")
+            
+        elif attempt_count < 7 and attempt_count >= max_attempts:
+            update_hangman_file(11, " _  \n")
+
+        # # --- Вывод текущего состояния виселицы ---
+        try:
             with open("hangman_stages.txt", "r", encoding="utf-8") as file:
-                lines = file.readlines()
+                hangman_display = file.read()
+                if attempt_count <= 2:
+                    print(colored("\nТекущая стадия виселицы:\n" + hangman_display,'red'))
+                elif attempt_count <= 4:
+                    print(colored("\nТекущая стадия виселицы:\n" + hangman_display,'yellow'))
+                else:
+                    print(colored("\nТекущая стадия виселицы:\n" + hangman_display,'green'))
+        except FileNotFoundError:
+            print("Файл с виселицей не найден.")
 
-            if line_number < len(lines):
-                lines[line_number] = new_content
-            else:
-                while len(lines) <= line_number:
-                    lines.append("\n")
-                lines[line_number] = new_content
-
-            with open("hangman_stages.txt", "w", encoding="utf-8") as file:
-                file.writelines(lines)
-
-        # Вывод текущей стадии из списка hangman_stages
-        print("\n".join(hangman_stages[attempt_count].splitlines()))
-    
-       
+        # --- Ввод буквы ---
+        print("\nВведи букву:")
+        letter = input().strip().lower()
+        
+        already_used_letters = []
+        
+        for i in range(0, len(already_used_letters)):
+            already_used_letters.append(letter)
+            print(f'Уже использованные буквы:{already_used_letters}')
 
         found = False
         for i in range(len(word_letters)):
@@ -118,34 +150,37 @@ def human_answers(word_for_guessing,lengt_of_word_for_guessing):
                 guessed_letters[i] = letter
                 found = True
 
+        # --- Ответ на успешную/неуспешную попытку ---
         if found:
             with open('responses.txt', 'r', encoding="utf-8") as file:
                 desired_line2 = linecache.getline('responses.txt', 1).strip().split(":")
                 text = desired_line2[1:]
-                print(f"{' '.join(text)}")
-
+                print(colored(f"{' '.join(text)}\n",'green'))
         else:
             attempt_count += 1
-
             with open('responses.txt', 'r', encoding="utf-8") as file:
                 desired_line2 = linecache.getline('responses.txt', 2).strip().split(":")
                 text = desired_line2[1:]
+                print(colored(f"{' '.join(text)}\n",'red'))
+
+        # --- Проверка поражения ---
+        if attempt_count >= max_attempts:
+            with open('responses.txt', 'r', encoding="utf-8") as file:
+                desired_line2 = linecache.getline('responses.txt', 5).strip().split(":")
+                text = desired_line2[1:]
                 print(f"{' '.join(text)}")
+                print(f"Загаданное слово: {word_for_guessing}")
+            break
 
-            if attempt_count >= max_attempts:
-                with open('responses.txt', 'r', encoding="utf-8") as file:
-                    desired_line2 = linecache.getline('responses.txt', 5).strip().split(":")
-                    text = desired_line2[1:]
-                    print(f"{' '.join(text)}")
-                    print(f"Загаданное слово: {word_for_guessing}")
-                break
-
+        # --- Проверка победы ---
         if "_" not in guessed_letters:
             with open('responses.txt', 'r', encoding="utf-8") as file:
                 desired_line2 = linecache.getline('responses.txt', 4).strip().split(":")
                 text = desired_line2[1:]
                 print(f"{' '.join(text)}")
             break
+        
+        os.system('cls' if os.name == 'nt' else 'clear')
 
 if level == 1:
    word_for_guessing_level_1,lengt_of_word_for_guessing_level_1 = first_level()
